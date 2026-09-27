@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Item from "@/components/CardMusica";
 import Filtro from "@/components/Filtro";
+import SelectUser from "@/components/User";
 import { Search, SkipBack, Pause, SkipForward } from 'lucide-react';
 import { useState } from 'react' ;
 
@@ -11,6 +12,7 @@ export default function Home() {
 
   return (
     <div className="relative flex justify-center h-screen overflow-hidden p-3 font-sans">
+      <SelectUser />
 
       <div className="relative w-[25%] bg-marfim p-8 z-0 shadow-[-12px_0px_20px_3px_rgba(86,41,36,0.25)]" />
         <div className="absolute left-[25%] top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 flex items-center">

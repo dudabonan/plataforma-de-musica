@@ -1,7 +1,7 @@
 "use client";
 
 import Image from 'next/image';
-import { Heart } from 'lucide-react';
+import { Heart, Play } from 'lucide-react';
 import { useState } from "react";
 
 interface Musica {
@@ -15,19 +15,33 @@ interface Musica {
 
 export default function Item({ nome, artista, tempo, estilo, capa, tocar }: Musica) {
     const [fav, setFav] = useState(false);
+    const [plays, setPlays] = useState(0);
+
+    const handleTocar = () => {
+        setPlays(plays + 1);
+        tocar();
+    };
 
     return (
-        <div className="relative flex items-center p-4 gap-4 shrink-0 bg-marfim h-28 w-[70%] rounded-sm border border-bege shadow-[3px_3px_3px_rgba(86,41,36,0.15)]">
+        <div className="relative flex items-center p-4 gap-6 shrink-0 bg-marfim h-28 w-[70%] rounded-sm border border-bege shadow-[3px_3px_3px_rgba(86,41,36,0.15)]">
             <div
-                onClick={tocar}
-                className="relative bg-bege h-20 aspect-square rounded-sm hover:opacity-80 active:scale-95 transition-all"
+                onClick={handleTocar}
+                className="relative bg-bege h-20 aspect-square rounded-sm active:scale-95 transition-all cursor-pointer group"
             >
                 <Image
                     src={capa}
                     alt="Capa"
                     fill
-                    className="object-cover rounded-sm"
+                    draggable={false}
+                    className="object-cover rounded-sm group-hover:brightness-50 transition duration-200"
                 />
+                <Play className='absolute inset-0 m-auto w-8 h-8 text-bege/80 fill-bege/90 opacity-0 group-hover:opacity-100 transition duration-200 z-10' />
+
+                {plays > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-marrom text-bege font-medium text-xs px-2 py-0.5 rounded-full z-10 shadow-md">
+                        {plays}x
+                    </span>
+                )}
             </div>
             
             <div className="flex flex-col justify-between flex-1 min-w-0">
