@@ -5,10 +5,31 @@ import Item from "@/components/CardMusica";
 import Filtro from "@/components/Filtro";
 import SelectUser from "@/components/User";
 import { Search, SkipBack, Pause, SkipForward } from 'lucide-react';
-import { useState } from 'react' ;
+import { useState, useEffect } from 'react';
+import { buscarMusicas, listarFavoritos, listarMaisOuvidas, listarPorEstiloNome, Musica } from '@/lib/api';
+
+const ID_USUARIO = 1; // depois trocar pelo seletor de usuário
 
 export default function Home() {
   const [capaAtual, setCapaAtual] = useState('/4.jpg');
+  const [termo, setTermo] = useState('');
+  const [filtroAtivo, setFiltroAtivo] = useState('');
+  const [estiloAtivo, setEstiloAtivo] = useState('');
+  const [musicas, setMusicas] = useState<Musica[]>([]);
+
+  useEffect(() => {
+    if (filtroAtivo === 'Favoritos') {
+      listarFavoritos(ID_USUARIO).then(setMusicas).catch(console.error);
+    } else if (filtroAtivo === 'Mais Ouvidas') {
+      listarMaisOuvidas(ID_USUARIO).then(setMusicas).catch(console.error);
+    } else if (filtroAtivo === 'Estilo Musical' && estiloAtivo) {
+      listarPorEstiloNome(estiloAtivo, ID_USUARIO).then(setMusicas).catch(console.error);
+    } else if (filtroAtivo === 'Estilo Musical' && !estiloAtivo) {
+      setMusicas([]);
+    } else {
+      buscarMusicas(termo, ID_USUARIO).then(setMusicas).catch(console.error);
+    }
+  }, [termo, filtroAtivo, estiloAtivo]);
 
   return (
     <div className="relative flex justify-center h-screen overflow-hidden p-3 font-sans">
@@ -60,6 +81,8 @@ export default function Home() {
         <div className="relative flex items-center justify-center w-[50%] py-12 shrink-0">
           <input
             type="text"
+            value={termo}
+            onChange={(e) => setTermo(e.target.value)}
             placeholder="Procure..."
             className="w-full py-2 px-5 bg-white/90 text-sm md:text-base lg:text-lg text-preto font-normal focus:outline-none rounded-full shadow-[3px_3px_3px_rgba(86,41,36,0.15)]"
           />
@@ -73,34 +96,31 @@ export default function Home() {
         </div>
 
         <div className="pb-12 shrink-0">
-          <Filtro />
+          <Filtro
+            filtroAtivo={filtroAtivo}
+            estiloAtivo={estiloAtivo}
+            onFiltroChange={setFiltroAtivo}
+            onEstiloChange={setEstiloAtivo}
+          />
         </div>
 
         <div className="flex-1 w-full max-w-2xl mx-auto overflow-y-auto scroll-personalizado pb-4 pl-1">
           <div className="flex gap-4 items-center justify-center flex-col w-full">
-            <Item
-              nome="Música 1"
-              artista="Cantor 1" tempo={270}
-              estilo="Estilo Musical 1"
-              capa="/1.jpg"
-              tocar={() => setCapaAtual('/1.jpg')}
-            />
-
-            <Item
-              nome="Música 2"
-              artista="Cantor 2" tempo={300}
-              estilo="Estilo Musical 2"
-              capa="/3.jpg"
-              tocar={() => setCapaAtual('/3.jpg')}
-            />
-
-            <Item
-              nome="Música 3"
-              artista="Cantor 3" tempo={230}
-              estilo="Estilo Musical 1"
-              capa="/2.png"
-              tocar={() => setCapaAtual('/2.png')}
-            />
+            {musicas.map((musica) => (
+              <Item
+                key={musica.cod_musica}
+                codMusica={musica.cod_musica}
+                idUsuario={ID_USUARIO}
+                nome={musica.musica}
+                artista={musica.artista}
+                tempo={musica.duracao_segundos}
+                estilo={musica.estilos ?? musica.estilo ?? ''}
+                favoritoInicial={musica.favorito}
+                // qtdAcessos={musica.qtd_acessos}
+                capa={musica.capa ?? '/1.jpg'}
+                tocar={() => setCapaAtual(musica.capa ?? '/1.jpg')}
+              />
+            ))}
           </div>
         </div>
 

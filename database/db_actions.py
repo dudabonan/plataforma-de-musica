@@ -12,21 +12,37 @@ MAPA_ESTILOS_FRONTEND = {
     "Trilhas": ["Filmes/Games", "Trilhas de filmes"],
 }
 
-def marcar_favorito(id_usuario, cod_musica):
-    db.executar_query(
-        """UPDATE usuario_musica
-           SET favorito = TRUE
-           WHERE id_um = %s AND cod_musica = %s""",
-        (id_usuario, cod_musica)
+def listar_usuarios():
+    return db.executar_query(
+        """SELECT id_usuario, usuario, email, nome_usuario, data_cadastro
+           FROM usuario ORDER BY nome_usuario"""
     )
     
 def alternar_favorito(id_usuario, cod_musica):
-    db.executar_query(
-        """UPDATE usuario_musica
-           SET favorito = NOT favorito
-           WHERE id_um = %s AND cod_musica = %s""",
+    resultado = db.executar_query(
+        """
+        INSERT INTO usuario_musica (id_um, cod_musica, favorito)
+        VALUES (%s, %s, TRUE)
+        ON CONFLICT (id_um, cod_musica)
+        DO UPDATE
+        SET favorito = NOT usuario_musica.favorito
+        RETURNING favorito
+        """,
         (id_usuario, cod_musica)
     )
+
+    return resultado[0]["favorito"] if resultado else None
+
+def registrar_acesso(id_usuario, cod_musica):
+    resultado = db.executar_query(
+        """INSERT INTO usuario_musica (id_um, cod_musica, qtd_acessos)
+           VALUES (%s, %s, 1)
+           ON CONFLICT (id_um, cod_musica)
+           DO UPDATE SET qtd_acessos = usuario_musica.qtd_acessos + 1
+           RETURNING qtd_acessos""",
+        (id_usuario, cod_musica)
+    )
+    return resultado[0]["qtd_acessos"] if resultado else None
 
 def buscar_musicas(termo, id_usuario):
     return db.executar_query(

@@ -1,22 +1,24 @@
 'use client'
 
-import { useState } from 'react';
+interface FiltroProps {
+    filtroAtivo: string;
+    estiloAtivo: string;
+    onFiltroChange: (filtro: string) => void;
+    onEstiloChange: (estilo: string) => void;
+}
 
-export default function Filtro() {
-    const [filtroAtivo, setFiltroAtivo] = useState('');
-    const [estiloAtivo, setEstiloAtivo] = useState('');
-
+export default function Filtro({ filtroAtivo, estiloAtivo, onFiltroChange, onEstiloChange }: FiltroProps) {
     const filtrosPrincipais = ['Favoritos', 'Mais Ouvidas', 'Estilo Musical'];
-    const estilosMusicais = ['Pop', 'MPB', 'Samba', 'Rap', 'Jazz', 'R&B'];
+    const estilosMusicais = ['Pop', 'MPB', 'Samba', 'Rap', 'R&B', 'Rock', 'Trilhas'];
 
     const handleFiltroClick = (filtro: string) => {
         if (filtroAtivo === filtro) {
-            setFiltroAtivo('');
-            setEstiloAtivo('');
+            onFiltroChange('');
+            onEstiloChange('');
         } else {
-            setFiltroAtivo(filtro);
+            onFiltroChange(filtro);
             if (filtro !== 'Estilo Musical') {
-                setEstiloAtivo('');
+                onEstiloChange('');
             }
         }
     };
@@ -54,7 +56,7 @@ export default function Filtro() {
                         return (
                             <button
                                 key={estilo}
-                                onClick={() => setEstiloAtivo(isEstiloAtivo ? '' : estilo)}
+                                onClick={() => onEstiloChange(isEstiloAtivo ? '' : estilo)}
                                 className={`
                                     text-sm px-3 py-1 rounded-sm border transition-all duration-300
                                     ${isEstiloAtivo
