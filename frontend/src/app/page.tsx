@@ -3,14 +3,19 @@
 import Image from 'next/image';
 import Item from "@/components/CardMusica";
 import Filtro from "@/components/Filtro";
-import SelectUser from "@/components/User";
 import { Search, SkipBack, Pause, SkipForward } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { buscarMusicas, listarFavoritos, listarMaisOuvidas, listarPorEstiloNome, Musica } from '@/lib/api';
+import { useState, useEffect, useRef } from 'react';
+import { buscarMusicas, listarFavoritos, listarMaisOuvidas, listarPorEstiloNome, registrarAcesso, Musica } from '@/lib/api';
+import { useUser } from './contexts/UserContext';
 
-const ID_USUARIO = 1; // depois trocar pelo seletor de usuário
 
 export default function Home() {
+  const { user } = useUser();
+  const idUsuario = user?.id_usuario;
+  const currentUser = useRef(idUsuario);
+  useEffect(() => { currentUser.current = idUsuario; }, [idUsuario]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [capaAtual, setCapaAtual] = useState('/4.jpg');
   const [termo, setTermo] = useState('');
   const [filtroAtivo, setFiltroAtivo] = useState('');
@@ -18,22 +23,33 @@ export default function Home() {
   const [musicas, setMusicas] = useState<Musica[]>([]);
 
   useEffect(() => {
-    if (filtroAtivo === 'Favoritos') {
-      listarFavoritos(ID_USUARIO).then(setMusicas).catch(console.error);
-    } else if (filtroAtivo === 'Mais Ouvidas') {
-      listarMaisOuvidas(ID_USUARIO).then(setMusicas).catch(console.error);
-    } else if (filtroAtivo === 'Estilo Musical' && estiloAtivo) {
-      listarPorEstiloNome(estiloAtivo, ID_USUARIO).then(setMusicas).catch(console.error);
-    } else if (filtroAtivo === 'Estilo Musical' && !estiloAtivo) {
-      setMusicas([]);
-    } else {
-      buscarMusicas(termo, ID_USUARIO).then(setMusicas).catch(console.error);
+    let active = true;
+    setMusicas([]); setError('');
+    if (!idUsuario || (filtroAtivo === 'Estilo Musical' && !estiloAtivo)) {
+      setLoading(false); return;
     }
-  }, [termo, filtroAtivo, estiloAtivo]);
+    setLoading(true);
+    const promise = filtroAtivo === 'Favoritos' ? listarFavoritos(idUsuario)
+      : filtroAtivo === 'Mais Ouvidas' ? listarMaisOuvidas(idUsuario)
+      : filtroAtivo === 'Estilo Musical' ? listarPorEstiloNome(estiloAtivo, idUsuario)
+      : buscarMusicas(termo, idUsuario);
+    promise.then((result) => { if (active) setMusicas(result); })
+      .catch(() => { if (active) setError('Não foi possível carregar as músicas.'); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [termo, filtroAtivo, estiloAtivo, idUsuario]);
+
+  const selecionarMusica = async (musica: Musica) => {
+    if (!idUsuario) return;
+    const result = await registrarAcesso(musica.cod_musica, idUsuario);
+    if (currentUser.current !== idUsuario) return;
+    setCapaAtual(musica.capa ?? '/1.jpg');
+    setMusicas((current) => current.map((m) => m.cod_musica === musica.cod_musica
+      ? { ...m, qtd_acessos: result.qtd_acessos } : m));
+  };
 
   return (
     <div className="relative flex justify-center h-screen overflow-hidden p-3 font-sans">
-      <SelectUser />
 
       <div className="relative w-[25%] bg-marfim p-8 z-0 shadow-[-12px_0px_20px_3px_rgba(86,41,36,0.25)]" />
         <div className="absolute left-[25%] top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 flex items-center">
@@ -78,7 +94,9 @@ export default function Home() {
       </div>
 
       <main className="flex flex-1 flex-col items-center h-full pl-76 z-0 shadow-[12px_0px_20px_3px_rgba(86,41,36,0.25)]">
-        <div className="relative flex items-center justify-center w-[50%] py-12 shrink-0">
+        <form onSubmit={(e) => {
+          e.preventDefault(); setFiltroAtivo(''); setEstiloAtivo('');
+        }} className="relative flex items-center justify-center w-[50%] py-12 shrink-0">
           <input
             type="text"
             value={termo}
@@ -88,12 +106,13 @@ export default function Home() {
           />
 
           <button 
-            type="button" 
+            type="submit"
+            aria-label="Buscar músicas"
             className="absolute right-1 border-l border-bege px-3 cursor-pointer"
           >
             <Search className="w-5 h-5 text-marrom" />
           </button>
-        </div>
+        </form>
 
         <div className="pb-12 shrink-0">
           <Filtro
@@ -106,19 +125,28 @@ export default function Home() {
 
         <div className="flex-1 w-full max-w-2xl mx-auto overflow-y-auto scroll-personalizado pb-4 pl-1">
           <div className="flex gap-4 items-center justify-center flex-col w-full">
+            {loading && <p role="status">Carregando músicas...</p>}
+            {error && <p role="alert" className="text-red-700">{error}</p>}
+            {!loading && !error && idUsuario && !musicas.length && <p>Nenhuma música encontrada.</p>}
             {musicas.map((musica) => (
               <Item
-                key={musica.cod_musica}
+                key={`${idUsuario}-${musica.cod_musica}`}
                 codMusica={musica.cod_musica}
-                idUsuario={ID_USUARIO}
+                idUsuario={idUsuario!}
                 nome={musica.musica}
                 artista={musica.artista}
                 tempo={musica.duracao_segundos}
                 estilo={musica.estilos ?? musica.estilo ?? ''}
                 favoritoInicial={musica.favorito}
-                // qtdAcessos={musica.qtd_acessos}
+                qtdAcessos={musica.qtd_acessos ?? 0}
+                onFavorito={(favorito) => {
+                  if (currentUser.current !== idUsuario) return;
+                  setMusicas((current) => filtroAtivo === 'Favoritos' && !favorito
+                    ? current.filter((m) => m.cod_musica !== musica.cod_musica)
+                    : current.map((m) => m.cod_musica === musica.cod_musica ? { ...m, favorito } : m));
+                }}
                 capa={musica.capa ?? '/1.jpg'}
-                tocar={() => setCapaAtual(musica.capa ?? '/1.jpg')}
+                tocar={() => selecionarMusica(musica)}
               />
             ))}
           </div>

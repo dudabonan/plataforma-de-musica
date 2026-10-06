@@ -11,9 +11,6 @@
   --color-marfim: #C6B69F;
   --color-marrom: #612C20;
 
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-
   --font-sans: var(--font-poppins), sans-serif;
 }
 

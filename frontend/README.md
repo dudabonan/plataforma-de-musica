@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Plataforma de música
 
-## Getting Started
+Interface Next.js com React, TypeScript, Tailwind CSS e fonte Poppins. Permite selecionar usuários, buscar músicas, listar favoritos, filtrar por estilo e consultar as músicas mais ouvidas. Favoritos e acessos são registrados pela API Flask no PostgreSQL.
 
-First, run the development server:
+## Executar localmente
+
+Na raiz do projeto, com as dependências Python instaladas (`flask`, `flask-cors`, `psycopg2`, `python-dotenv`), configure o `.env` com `HOST`, `DB_USER`, `PASSWD` e `DATABASE`. As opções `DB_PORT` e `DB_SSLMODE` são opcionais. O banco deve estar criado e populado.
+
+Inicie o backend em um terminal:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+python app.py
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Em outro terminal, instale as dependências e inicie o frontend:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Abra [http://localhost:3000](http://localhost:3000). A API usa `http://localhost:5000` por padrão; para outro endereço, defina `NEXT_PUBLIC_API_URL` no arquivo `frontend/.env.local`.
 
-## Learn More
+## Verificação
 
-To learn more about Next.js, take a look at the following resources:
+Na pasta `frontend`:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run lint
+npx tsc --noEmit --incremental false
+npm run build
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+O clique na capa registra um acesso e atualiza a capa exibida. O projeto atual não reproduz áudio; os controles do player são visuais.

@@ -49,7 +49,7 @@ export default function Filtro({ filtroAtivo, estiloAtivo, onFiltroChange, onEst
             </div>
 
             {filtroAtivo === 'Estilo Musical' && (
-                <div className="flex items-center justify-center flex-wrap mt-2 animate-in fade-in slide-in-from-top-2 gap-3 duration-300">
+                <div className="flex items-center justify-center flex-wrap mt-2 gap-3 duration-300">
                     {estilosMusicais.map((estilo) => {
                         const isEstiloAtivo = estiloAtivo === estilo;
 
